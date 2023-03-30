@@ -12,9 +12,10 @@ class Converter:
         button_fg = "#232023"
 
         
-        self.all_calculations = ['1 F‹ is -17 C‹', '54 F‹ is 12 C‹', 
-                                 '6 C‹ is 43 F‹', '-45 F‹ is -43 C‹', 
-                                 '4 F‹ is -16 C‹', '5 C‹ is 41 F‹']
+        # testing only 5 data points
+        self.all_calculations = ['1 F* is -17 C*', '54 F* is 12 C*', 
+                                 '6 C* is 43 F*', '-45 F* is -43 C*', 
+                                 '4 F* is -16 C*']
 
         # GUI Frame
         self.temp_frame = Frame(padx=10, pady=10)
@@ -26,24 +27,35 @@ class Converter:
         self.button_frame.grid(row=4)
 
         self.to_history_button = self.history_or_info_button = Button(
-            self.button_frame, text="History/Export", bg="#e1d5e7", 
-            fg=button_fg, font=button_font, width=12, command=self.to_history)
+            self.button_frame, text="History/Export", bg="#dae8fc", 
+            fg=button_fg, font=button_font, width=12, 
+            command=lambda: self.to_history(self.all_calculations))
         self.history_or_info_button.grid(row=1, column=0, padx=5, pady=5)
 
         # Flag to check if the history window is open
         self.history_window_open = False
 
 
-    def to_history(self):
+    def to_history(self, all_calculations):
         # Disable the Help/Info button and open the history window
         self.to_history_button.config(state=DISABLED)
-        DisplayHelp(self)
+        HistoryExport(self, all_calculations)
 
 
-class DisplayHelp:
-    def __init__(self, partner):
+class HistoryExport:
+    def __init__(self, partner, all_calculations):
+
+
+        # Maximum number of calculations
+        max_calcs = 5
+        self.var_max_calcs = IntVar()
+        self.var_max_calcs.set(max_calcs)
+
+        # Calculation list to string
+        calc_string_text = HistoryExport.get_calc_string(all_calculations)
+        
+
         background = "#f9f4ff"
-
         self.history_box = Toplevel()
 
         partner.history_window_open = True
@@ -56,9 +68,25 @@ class DisplayHelp:
                                         font=("Arial", "14", "bold"))
         self.history_heading_label.grid(row=0)
         
-        history_text = "Below are your recent calculations - " \
-            "showing 3/3 calculations. " \
-            "All calculations are shown to the nearest degree"
+
+        # Text and Background Changes 
+        num_calcs = len(all_calculations)
+        if num_calcs > max_calcs:
+            '''Peach Color'''
+            calc_background = "#FFE6CC"
+            showing_all = "Here are your calculations " \
+                f"{max_calcs}/{num_calcs} calculations shown. Please export " \
+                "your calcultions to see your full calculation " \
+                "history"
+        else:
+            '''Pale Green Color'''
+            calc_background = "#B4FACB"
+            showing_all = "Below is your calculation history."
+
+
+        # History Text and Label
+        history_text = f"{showing_all} \n\nAll calculations are shown to " \
+        "the nearest degree."
         
         self.text_instructions_label = Label(self.history_frame, 
                                              text=history_text,
@@ -68,10 +96,13 @@ class DisplayHelp:
         self.text_instructions_label.grid(row=1)
         
         self.all_calcs_label = Label(self.history_frame,
-                                     text="calculations go here",
-                                     padx=10, pady=10, bg="#ffe6cc",
-                                     width=40, justify="left")
+                             text="\n".join(all_calculations[-5:]),
+                             padx=10, pady=10, bg=calc_background,
+                             width=40, justify="left")
+
         self.all_calcs_label.grid(row=2)
+
+
         
         # instructions for saving files
         save_text = "Either choose a custom file name (and push " \
@@ -105,10 +136,31 @@ class DisplayHelp:
                                     width=12)
         
         self.dismiss_button = Button(self.history_frame, font=("Arial", "12", "bold"), 
-                                     text="Dismiss", bg="#e1d5e7", fg="#232023",
+                                     text="Dismiss", bg="#dae8fc", fg="#232023",
                                      command=partial(self.close_history, partner))
         self.dismiss_button.grid(row=7, padx=10, pady=10)
 
+
+    @staticmethod
+    def get_calc_string(var_calculations):
+        # Get maximum calculation to display
+        max_calcs = 5
+        calc_string = ""
+
+        # Workout how many times to loop
+        if len(var_calculations) >= max_calcs:
+            stop = max_calcs
+        else:
+            stop = len(var_calculations)
+        
+        # Iterate to all but the last item
+        for item in range(0, stop - 1):
+            calc_string += var_calculations[len(var_calculations) - item - 1]
+            '''add final item without final line break'''
+            calc_string += "\n"
+
+        calc_string += var_calculations[-max_calcs]
+        return calc_string
     
     def close_history(self, partner):
         partner.to_history_button.config(state=NORMAL)
